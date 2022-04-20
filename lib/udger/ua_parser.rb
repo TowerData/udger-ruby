@@ -2,14 +2,14 @@ module Udger
   class UaParser < BaseParser
     attr_accessor :db, :ua_string, :object
 
-    def initialize(db, ua_string, crawler: true, client: true, os: true, device: true, device_market: true)
+    def initialize(db, ua_string, kargs = {})
       super(db)
 
-      @match_crawler = crawler
-      @match_client = client
-      @match_os = os
-      @match_device = device
-      @match_device_market = device_market
+      @match_crawler = kargs.fetch(:crawler, true)
+      @match_client = kargs.fetch(:client, true)
+      @match_os = kargs.fetch(:os, true)
+      @match_device = kargs.fetch(:device, true)
+      @match_device_market = kargs.fetch(:device_market, true)
 
       @ua_string = ua_string
       @object = UserAgent.new
@@ -21,6 +21,7 @@ module Udger
 
     def parse
       return unless ua_string
+
       object.ua_string = ua_string
       crawler_data = @match_crawler ? parse_crawler : []
       if !crawler_data.empty?
@@ -35,7 +36,6 @@ module Udger
         devise_market_name if @match_device_market
       end
     end
-
 
     private
 
@@ -135,6 +135,7 @@ module Udger
 
       data = db.execute(query, @client_id)
       return if data.empty?
+
       result = data[0]
       @os_id = result['os_id']
       object.os = result['name']
@@ -151,7 +152,6 @@ module Udger
     end
 
     def parse_device
-
       query = 'SELECT deviceclass_id,regstring,name,name_code,icon,icon_big
                FROM udger_deviceclass_regex
                JOIN udger_deviceclass_list ON udger_deviceclass_list.id=udger_deviceclass_regex.deviceclass_id
@@ -167,30 +167,29 @@ module Udger
       end
 
       # If there is no @client_class_id and @match_client is not enabled
-      if @client_class_id == -1 && !@match_client
-        parse_client
-      end
+      parse_client if @client_class_id == -1 && !@match_client
 
       if @deviceclass_id.zero? && @client_class_id != -1
-          query = 'SELECT deviceclass_id,name,name_code,icon,icon_big
+        query = 'SELECT deviceclass_id,name,name_code,icon,icon_big
                    FROM udger_deviceclass_list
                    JOIN udger_client_class ON udger_client_class.deviceclass_id=udger_deviceclass_list.id
                    WHERE udger_client_class.id=?'
-          data = db.execute(query, @client_class_id)
-          unless data.empty?
-            result = data[0]
-            @deviceclass_id = result['deviceclass_id']
-            object.device_class = result['name']
-            object.device_class_code = result['name_code']
-            object.device_class_icon = result['icon']
-            object.device_class_icon_big = result['icon_big']
-            object.device_class_info_url = "https://udger.com/resources/ua-list/device-detail?device=#{result['name']}"
-          end
+        data = db.execute(query, @client_class_id)
+        unless data.empty?
+          result = data[0]
+          @deviceclass_id = result['deviceclass_id']
+          object.device_class = result['name']
+          object.device_class_code = result['name_code']
+          object.device_class_icon = result['icon']
+          object.device_class_icon_big = result['icon_big']
+          object.device_class_info_url = "https://udger.com/resources/ua-list/device-detail?device=#{result['name']}"
+        end
       end
     end
 
     def devise_market_name
       return unless object.os_family_code
+
       # TODO: santize code
       query = "SELECT id,regstring FROM udger_devicename_regex WHERE
                ((os_family_code='" + object.os_family_code + "' AND os_code='-all-')
@@ -216,6 +215,5 @@ module Udger
         end
       end
     end
-
   end
 end

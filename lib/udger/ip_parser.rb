@@ -11,13 +11,15 @@ module Udger
 
     def parse
       return unless @ip
+
       object.ip = @ip
       parse_ip_object
     end
 
     def parse_ip_object
-      ip_object = fetch_ip()
+      ip_object = fetch_ip
       return if ip_object.nil?
+
       object.ip_ver = ip_object.ipv4? ? 4 : 6
       query = "SELECT udger_crawler_list.id as botid,ip_last_seen,ip_hostname,ip_country,ip_city,ip_country_code,ip_classification,ip_classification_code,
                       name,ver,ver_major,last_seen,respect_robotstxt,family,family_code,family_homepage,family_icon,vendor,vendor_code,vendor_homepage,crawler_classification,crawler_classification_code
@@ -27,7 +29,10 @@ module Udger
                LEFT JOIN udger_crawler_class ON udger_crawler_class.id=udger_crawler_list.class_id
                WHERE ip=? ORDER BY sequence"
       data = db.execute(query, ip_object.to_s)
-      unless data.empty?
+      if data.empty?
+        object.ip_classification = 'Unrecognized'
+        object.ip_classification_code = 'Unrecognized'
+      else
         result = data[0]
         object.ip_classification = result['ip_classification']
         object.ip_classification_code = result['ip_classification_code']
@@ -53,9 +58,6 @@ module Udger
         object.crawler_category = result['crawler_classification']
         object.crawler_category_code = result['crawler_classification_code']
         object.crawler_respect_robotstxt = result['respect_robotstxt']
-      else
-        object.ip_classification = 'Unrecognized'
-        object.ip_classification_code = 'Unrecognized'
       end
 
       if object.ip_ver == 4
@@ -73,6 +75,7 @@ module Udger
       ip_int = ip_object.to_i
       data = db.execute(query, ip_int, ip_int)
       return if data.empty?
+
       result = data[0]
       object.datacenter_name = result['name']
       object.datacenter_name_code = result['name_code']
@@ -92,6 +95,7 @@ module Udger
 
       data = db.execute(query)
       return if data.empty?
+
       result = data[0]
       object.datacenter_name = result['name']
       object.datacenter_name_code = result['name_code']
@@ -100,7 +104,7 @@ module Udger
 
     def fetch_ip
       IPAddr.new @ip
-    rescue
+    rescue StandardError
       nil
     end
   end
