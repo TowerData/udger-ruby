@@ -190,7 +190,7 @@ module Udger
     def devise_market_name
       return unless object.os_family_code
 
-      # TODO: santize code
+      # TODO: sanitize code
       query = "SELECT id,regstring FROM udger_devicename_regex WHERE
                ((os_family_code='" + object.os_family_code + "' AND os_code='-all-')
                OR
@@ -201,7 +201,8 @@ module Udger
                      FROM udger_devicename_list
                      JOIN udger_devicename_brand ON udger_devicename_brand.id=udger_devicename_list.brand_id
                      WHERE regex_id=? and code = ? COLLATE NOCASE"
-        qc = db.execute(sub_query, result['id'], match[0])
+        qc = db.execute(sub_query, [result['id'], match[0]])
+
         unless qc.empty?
           res = qc[0]
           object.device_marketname       = res['marketname']

@@ -73,7 +73,7 @@ module Udger
                JOIN udger_datacenter_list ON udger_datacenter_range.datacenter_id=udger_datacenter_list.id
                WHERE iplong_from <= ? AND iplong_to >= ?'
       ip_int = ip_object.to_i
-      data = db.execute(query, ip_int, ip_int)
+      data = db.execute(query, [ip_int, ip_int])
       return if data.empty?
 
       result = data[0]

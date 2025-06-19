@@ -16,6 +16,10 @@ Or install it yourself as:
 
     $ gem install udger
 
+Udger 0.2 is using sqlite gem 2.0.0 or higher.
+
+```ruby
+
 ## Usage
 
 User agent and ip parser for Udger db.
