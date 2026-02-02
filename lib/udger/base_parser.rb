@@ -14,8 +14,8 @@ module Udger
       Regexp.new string[r1 + 1..r2 - 1], true
     end
 
-    def regexp_parse(query, _cache = true)
-      db.execute(query) do |row|
+    def regexp_parse(query, _cache = true, params = [])
+      db.execute(query, params) do |row|
         match = ua_string.scan(regexp(row['regstring']))
         unless match.empty?
           yield match, row
