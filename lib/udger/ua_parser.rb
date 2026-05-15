@@ -190,13 +190,12 @@ module Udger
     def devise_market_name
       return unless object.os_family_code
 
-      # TODO: sanitize code
       query = "SELECT id,regstring FROM udger_devicename_regex WHERE
-               ((os_family_code='" + object.os_family_code + "' AND os_code='-all-')
+               ((os_family_code=? AND os_code='-all-')
                OR
-               (os_family_code='" + object.os_family_code + "' AND os_code='" + object.os_code + "'))
+               (os_family_code=? AND os_code=?))
                ORDER BY sequence"
-      regexp_parse(query, false) do |match, result|
+      regexp_parse(query, false, [object.os_family_code, object.os_family_code, object.os_code]) do |match, result|
         sub_query = "SELECT marketname,brand_code,brand,brand_url,icon,icon_big
                      FROM udger_devicename_list
                      JOIN udger_devicename_brand ON udger_devicename_brand.id=udger_devicename_list.brand_id
